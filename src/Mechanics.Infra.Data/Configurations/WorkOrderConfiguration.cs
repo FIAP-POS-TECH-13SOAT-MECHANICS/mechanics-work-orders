@@ -26,6 +26,6 @@ public class WorkOrderConfiguration : IEntityTypeConfiguration<WorkOrder>
 
         builder.HasIndex(e => e.AssignedToUserId);
         builder.HasIndex(e => e.CreatedByUserId);
-        builder.HasIndex(e => e.LastStatusChangedBy);
+        builder.HasIndex(e => e.LastStatusChangedByUserId);
     }
 }

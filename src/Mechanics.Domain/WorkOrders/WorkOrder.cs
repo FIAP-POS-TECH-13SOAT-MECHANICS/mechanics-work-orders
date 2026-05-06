@@ -41,7 +41,7 @@ public class WorkOrder : AbstractEntity
     /// <summary>
     ///     Usuário que realizou a última alteração de status.
     /// </summary>
-    public Guid? LastStatusChangedBy { get; set; }
+    public Guid? LastStatusChangedByUserId { get; set; }
 
     /// <summary>
     ///     Usuário a quem a OS foi atribuída (mecânico).
