@@ -15,15 +15,9 @@ namespace Mechanics.Infra.Data;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Customer> Customers { get; set; }
-    public DbSet<Product> Products { get; set; }
-    public DbSet<ServiceCatalog> ServiceCatalog { get; set; }
     public DbSet<Vehicle> Vehicles { get; set; }
     public DbSet<WorkOrder> WorkOrders { get; set; }
     public DbSet<WorkOrderHistory> WorkOrderHistories { get; set; }
-    public DbSet<Budget> Budgets { get; set; } = default!;
-    public DbSet<BudgetItem> BudgetItems { get; set; } = default!;
-    public DbSet<User> Users { get; set; }
-    public DbSet<Role> Roles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

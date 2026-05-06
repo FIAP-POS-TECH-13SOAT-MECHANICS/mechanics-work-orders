@@ -27,13 +27,6 @@ public static class WorkOrderEmailTemplates
                 """,
     };
 
-    public static EmailMessage WorkOrderPendingApproval(Customer customer, WorkOrder workOrder, Budget budget) => new()
-    {
-        Recipient = customer.Email,
-        Subject = "Orçamento da OS disponível - FIAP Mechanics",
-        Body = BuildPendingApprovalBody(customer, workOrder, budget),
-    };
-
     private static string BuildPendingApprovalBody(Customer customer, WorkOrder workOrder, Budget budget)
     {
         var sb = new StringBuilder();
@@ -107,27 +100,6 @@ public static class WorkOrderEmailTemplates
         Body = $"""
                 <p>Olá, <b>{customer.Name}</b>,</p>
                 <p>Seu veículo foi entregue.</p>
-                <p>Obrigado,<br/>FIAP Mechanics</p>
-                """,
-    };
-
-    public static EmailMessage MechanicBudgetDecision(User mechanic, WorkOrder workOrder, Budget budget, bool approved) => new()
-    {
-        Recipient = mechanic.Email,
-        Subject = approved
-            ? $"Orçamento aprovado - OS {workOrder.AccessKey} - FIAP Mechanics"
-            : $"Orçamento rejeitado - OS {workOrder.AccessKey} - FIAP Mechanics",
-        Body = $"""
-                <p>Olá, <b>{mechanic.FullName}</b>,</p>
-                <p>O orçamento da ordem <b>{workOrder.AccessKey}</b> ({workOrder.Id}) foi {(approved ? "aprovado" : "rejeitado")} pelo cliente.</p>
-
-                <ul>
-                    <li><b>Valor estimado</b>: {budget.Total:C}</li>
-                    <li>{(budget.Description is not null ? $"<b>Comentário do cliente</b>: {budget.Description}" : "O cliente não deixou nenhum comentário.")}</li>
-                </ul>
-
-                <p>{(approved ? "Por favor, inicie a execução quando apropriado." : "Por favor, revise o orçamento e proceda com ajustes necessários.")}</p>
-
                 <p>Obrigado,<br/>FIAP Mechanics</p>
                 """,
     };

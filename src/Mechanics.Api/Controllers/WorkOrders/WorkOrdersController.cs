@@ -141,50 +141,6 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
     }
 
     /// <summary>
-    ///     Inicia a execução da OS (Status: InProgress). (Mechanic)
-    /// </summary>
-    [HttpPost("{id:guid}/start")]
-    [Authorize(Roles = $"{RoleNames.Mechanic},{RoleNames.Administrator}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Start(Guid id, CancellationToken cancellationToken)
-    {
-        var userId = currentUserService.GetData().UserId;
-
-        await workOrderService.ChangeStatus(id, WorkOrderStatus.InProgress, userId, cancellationToken: cancellationToken);
-        return NoContent();
-    }
-
-    /// <summary>
-    ///     Marca a OS como concluída (Status: Completed). (Mechanic)
-    /// </summary>
-    [HttpPost("{id:guid}/complete")]
-    [Authorize(Roles = $"{RoleNames.Mechanic},{RoleNames.Administrator}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Complete(Guid id, CancellationToken cancellationToken)
-    {
-        var userId = currentUserService.GetData().UserId;
-
-        await workOrderService.ChangeStatus(id, WorkOrderStatus.Completed, userId,
-            cancellationToken: cancellationToken);
-        return NoContent();
-    }
-
-    /// <summary>
-    ///     Registra a entrega/retirada do veículo e encerra a OS. (Status: Delivered) (Attendant)
-    /// </summary>
-    [HttpPost("{id:guid}/deliver")]
-    [Authorize(Roles = $"{RoleNames.Attendant},{RoleNames.Administrator}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Deliver(Guid id, CancellationToken cancellationToken)
-    {
-        var userId = currentUserService.GetData().UserId;
-
-        await workOrderService.ChangeStatus(id, WorkOrderStatus.Delivered, userId,
-            cancellationToken: cancellationToken);
-        return NoContent();
-    }
-
-    /// <summary>
     ///     Lista ordens de serviço com filtros opcionais e paginação.
     /// </summary>
     /// <param name="request">Parâmetros de filtro e paginação.</param>
@@ -198,23 +154,6 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
     public async Task<IActionResult> GetWorkOrders([FromQuery] GetWorkOrdersRequest request, CancellationToken cancellationToken)
     {
         var response = await workOrderService.GetList(request, cancellationToken);
-        return Ok(response);
-    }
-
-    /// <summary>
-    ///     Obtém o tempo médio total estimado para execução dos serviços associados à ordem.
-    /// </summary>
-    /// <param name="id">Identificador da ordem.</param>
-    /// <param name="cancellationToken">Token para cancelamento da operação.</param>
-    /// <response code="200">Registro encontrado.</response>
-    /// <response code="404">Registro não encontrado.</response>
-    [HttpGet("{id:guid}/services/average-time")]
-    [Produces("application/json", Type = typeof(GetWorkOrderAverageTimeResponse))]
-    [ProducesResponseType(typeof(GetWorkOrderAverageTimeResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetAverageServiceTime(Guid id, CancellationToken cancellationToken)
-    {
-        var response = await workOrderService.GetAverageServiceTime(id, cancellationToken);
         return Ok(response);
     }
 }
