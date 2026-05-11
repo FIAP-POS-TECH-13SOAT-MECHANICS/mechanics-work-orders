@@ -2,7 +2,6 @@ using Mechanics.Application.WorkOrders.Requests;
 using Mechanics.Application.WorkOrders.Responses;
 using Mechanics.Application.WorkOrders.Services;
 using Mechanics.Domain.Auth;
-using Mechanics.Domain.WorkOrders;
 using Mechanics.Infra.Security;
 using Mechanics.Infra.Security.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -34,7 +33,8 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(CreateWorkOrderRequest request, CancellationToken cancellationToken)
     {
-        var response = await workOrderService.Create(request, cancellationToken);
+        var userId = currentUserService.GetData().UserId;
+        var response = await workOrderService.Create(request, userId, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = response.CreatedId }, response);
     }
 
@@ -54,24 +54,6 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
         var response = await workOrderService.Get(id, cancellationToken);
         if (response is null) return NotFound();
         return Ok(response);
-    }
-
-    /// <summary>
-    ///     Solicita aprovação do orçamento para a ordem.
-    /// </summary>
-    /// <param name="id">Identificador da ordem.</param>
-    /// <param name="cancellationToken">Token para cancelamento da operação.</param>
-    /// <response code="204">Solicitação realizada.</response>
-    /// <response code="400">Requisição inválida.</response>
-    [HttpPost("{id:guid}/request-approval")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> RequestApproval(Guid id, CancellationToken cancellationToken)
-    {
-        var userId = currentUserService.GetData().UserId;
-
-        await workOrderService.RequestApproval(id, userId, cancellationToken);
-        return NoContent();
     }
 
     /// <summary>
@@ -97,28 +79,7 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
     }
 
     /// <summary>
-    ///     Altera o status de uma ordem de serviço.
-    /// </summary>
-    /// <param name="id">Identificador da ordem.</param>
-    /// <param name="request">Novo status solicitado</param>
-    /// <param name="cancellationToken">Token para cancelamento da operação.</param>
-    /// <response code="204">Status alterado com sucesso.</response>
-    /// <response code="400">Requisição inválida.</response>
-    [HttpPost("{id:guid}/status")]
-    [Consumes(typeof(ChangeStatusRequest), "application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ChangeStatus(Guid id, [FromBody] ChangeStatusRequest request,
-        CancellationToken cancellationToken)
-    {
-        var userId = currentUserService.GetData().UserId;
-
-        await workOrderService.ChangeStatus(id, request.NewStatus, userId, request.Description, cancellationToken);
-        return NoContent();
-    }
-
-    /// <summary>
-    ///     Atualiza produtos, serviços e observações de uma ordem.
+    ///     Atualiza campos locais da ordem de serviço.
     /// </summary>
     /// <param name="id">Identificador da ordem.</param>
     /// <param name="request">Dados de atualização.</param>
