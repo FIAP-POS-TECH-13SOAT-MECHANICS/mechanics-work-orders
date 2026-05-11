@@ -71,7 +71,7 @@ public class WorkOrderAppService(
 
             await db.SaveChangesAsync(cancellationToken);
 
-            await eventPublisher.PublishAsync(new WorkOrderCreatedEvent
+            var workOrderCreatedEvent = new WorkOrderCreatedEvent
             {
                 EventId = Guid.NewGuid(),
                 OccurredAt = now,
@@ -80,8 +80,23 @@ public class WorkOrderAppService(
                 VehicleId = workOrder.VehicleId,
                 Status = workOrder.Status.ToString(),
                 CreatedByUserId = createdByUserId,
-                ReportedProblem= workOrder.ReportedProblem,
-            }, cancellationToken);
+                ReportedProblem = workOrder.ReportedProblem,
+            };
+
+            try
+            {
+                await eventPublisher.PublishAsync(workOrderCreatedEvent, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "Work order {WorkOrderId} was committed, but publishing WorkOrderCreatedEvent failed. " +
+                    "Message delivery should be recovered by a retry/outbox flow.",
+                    workOrder.Id,
+                    nameof(WorkOrderCreatedEvent),
+                    workOrderCreatedEvent.EventId);
+            }
 
             AppMetrics.WorkOrdersCreated.Add(1, new TagList
             {

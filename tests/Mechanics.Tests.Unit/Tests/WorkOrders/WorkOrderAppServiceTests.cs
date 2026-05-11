@@ -168,6 +168,42 @@ public class WorkOrderAppServiceTests
             Times.Once);
     }
 
+    [TestMethod("Criação de OS não deve falhar se publicação de evento falhar")]
+    public async Task It_ShouldCreateWorkOrder_WhenEventPublishFails()
+    {
+        var customerId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+
+        _eventPublisherMock
+            .Setup(publisher => publisher.PublishAsync(It.IsAny<WorkOrderCreatedEvent>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("SQS unavailable"));
+
+        await using var context = new DbContextTestBuilder()
+            .WithData([CustomerMocks.CreateCustomerPf(customerId)])
+            .WithData([VehicleMocks.CreateVehicle(vehicleId, customerId)])
+            .Build();
+
+        var service = BuildService(context);
+
+        var response = await service.Create(new CreateWorkOrderRequest
+        {
+            VehicleId = vehicleId,
+            ReportedProblem = "Falha intermitente",
+            Observations = "Teste de resiliência de publish",
+        }, Guid.NewGuid(), CancellationToken.None);
+
+        var created = await context.WorkOrders
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == response.CreatedId, TestContext.CancellationTokenSource.Token);
+        var history = await context.WorkOrderHistories
+            .AsNoTracking()
+            .Where(item => item.WorkOrderId == response.CreatedId && item.Action == "Created")
+            .ToListAsync(TestContext.CancellationTokenSource.Token);
+
+        Assert.IsNotNull(created);
+        Assert.AreEqual(1, history.Count);
+    }
+
     [TestMethod("Consulta OS por Id")]
     public async Task It_ShouldGetWorkOrderById()
     {
