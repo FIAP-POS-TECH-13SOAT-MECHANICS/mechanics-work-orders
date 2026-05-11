@@ -1,78 +1,77 @@
-# SERVICE_NAME
+# mechanics-work-orders
 
-Breve descrição do serviço.
+Microsserviço responsável por:
 
-## Definição do ambiente
+- `Customers`
+- `Vehicles`
+- `WorkOrders`
+- `WorkOrderHistories`
 
-- SDK: .NET 8.0
-- Banco de dados: MSSQL 2025
-- Serviço de E-mail: MailPit
-- Chave pública para JWT: AWS Secrets Manager
+Este serviço **não** implementa regras de `Billing` nem de `Execution`.
 
-## Execução do projeto
+## Ambiente
 
-Em cada nova fase do projeto, é recomendável apagar os volumes do Docker para evitar conflitos com a estrutura do banco
-de dados criado em fases anteriores. Para fazer isso, execute o seguinte comando na raiz do projeto:
+- SDK: .NET 8
+- Banco: SQL Server
+- E-mail local: MailPit
+- Mensageria: SQS (LocalStack em ambiente local)
 
-```bash
-docker compose down -v
-```
+## Comunicação entre serviços
 
-### Execução local (Debug)
+### REST síncrono (CrossServiceClient)
 
-Ao executar o projeto em modo DEBUG, o token de autenticação **NÃO** é validado, portanto pode-se usar um token expirado ou mesmo gerar um com uma chave genérica, facilitando o desenvolvimento.
+- Consulta ao `mechanics-identity` para validação de usuário externo (ex.: mecânico por `AssignedToUserId`).
+- Endpoints de consulta por ID aceitam role `SERVICE`.
 
-Primeiro inicie o banco de dados e serviço de e-mail:
+### Eventos assíncronos (SQS)
+
+Publishers:
+
+- `customer-created`
+- `work-order-created`
+
+Consumers (fila preparada, implementação futura):
+
+- `status-changed`
+- `payment-approved`
+
+## Execução local
+
+Suba dependências:
 
 ```bash
 docker compose up mssql mailpit localstack -d
 ```
 
-Aguarde até o serviço `mssql` estar iniciando. O processo leva cerca de 40 segundos.
-Com os recursos em execução, execute o projeto com o comando abaixo:
+Rode a API:
 
 ```bash
 dotnet run --project ./src/Mechanics.Api/Mechanics.Api.csproj
 ```
 
-Caso precise gerar um novo token, use o script `new-token.ps1`:
+Swagger:
+
+- [http://localhost:5000/work-orders/swagger](http://localhost:5000/work-orders/swagger)
+
+## Migrações
+
+Criar migração:
 
 ```powershell
-.\scripts\new-token.ps1
+dotnet ef migrations add Init --project src/Mechanics.Infra.Data --startup-project src/Mechanics.Api
 ```
 
-### Docker Compose (Release)
-
-Para rodar o projeto via Docker Compose, é necessário primeiro obter a chave pública no AWS Secrets Manager (ajuste o nome de acordo o ambiente).
-Ela é gerada na camada `auth`. Consulte o [repositório de infraestrutura](https://github.com/FIAP-POS-TECH-13SOAT-MECHANICS/mechanics-infra) para mais informações.
+Aplicar no banco:
 
 ```powershell
-aws secretsmanager get-secret-value --secret-id "fiap-mechanics-dev-jwt/public-key" --query SecretString --output text > "src/Mechanics.Api/keys/jwt-public.pem"
+dotnet ef database update --project src/Mechanics.Infra.Data --startup-project src/Mechanics.Api
 ```
 
-Inicie o projeto via Docker Compose:
+## Testes
 
 ```bash
-docker compose up -d --build
+dotnet build Mechanics.Example.sln
+dotnet test Mechanics.Example.sln
 ```
 
-Após o processo concluir, o projeto estará disponível nas seguintes URLs:
-
-- Swagger do projeto: <http://localhost:5000/api/swagger>
-- Cliente de e-mail: <http://localhost:8025>
-
-> **Opcional**
-> Utilize o script [dev-seeds](./dev-seeds/README.md) para popular o banco com dados de exemplo.
-
-Utilize o script `invoke-getToken.ps1` para obter um token de acesso. É necessário que o serviço [Mechanics.Auth](https://github.com/FIAP-POS-TECH-13SOAT-MECHANICS/mechanics-auth) já esteja em execução.
-
-## Pipeline de CI/CD
-
-Ao criar uma PR para as branches abaixo, os testes automatizados serão executados.
-Ao completar o PR, os testes são novamente executados e é feito o deploy no ambiente.
-
-| Branch    | Ambiente    |
-|-----------|-------------|
-| `main`    | Production  |
-| `release` | Staging     |
-| `develop` | Development |
+Observação: testes de integração dependem de Docker/Testcontainers ativo.
