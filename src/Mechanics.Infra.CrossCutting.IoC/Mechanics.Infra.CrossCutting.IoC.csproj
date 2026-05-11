@@ -16,6 +16,7 @@
     <ProjectReference Include="..\Mechanics.Infra.Messaging\Mechanics.Infra.Messaging.csproj" />
     <ProjectReference Include="..\Mechanics.Infra.Observability\Mechanics.Infra.Observability.csproj" />
     <ProjectReference Include="..\Mechanics.Infra.Integrations.EmailSender\Mechanics.Infra.Integrations.EmailSender.csproj"/>
+    <ProjectReference Include="..\Mechanics.Infra.CrossServiceClient\Mechanics.Infra.CrossServiceClient.csproj" />
     <ProjectReference Include="..\Mechanics.Application\Mechanics.Application.csproj" />
     <ProjectReference Include="..\Mechanics.Domain\Mechanics.Domain.csproj" />
     <ProjectReference Include="..\Mechanics.Infra.Data\Mechanics.Infra.Data.csproj" />
