@@ -91,7 +91,7 @@ public class WorkOrderAppService(
             {
                 logger.LogError(
                     ex,
-                    "Work order {WorkOrderId} was committed, but publishing WorkOrderCreatedEvent failed. " +
+                    "Work order {WorkOrderId} was committed, but publishing {EventName} failed. EventId: {EventId}. " +
                     "Message delivery should be recovered by a retry/outbox flow.",
                     workOrder.Id,
                     nameof(WorkOrderCreatedEvent),
