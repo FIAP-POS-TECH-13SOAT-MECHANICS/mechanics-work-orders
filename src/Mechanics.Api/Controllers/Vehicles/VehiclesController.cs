@@ -1,4 +1,4 @@
-﻿using Mechanics.Application.Utils.CommonResponses;
+using Mechanics.Application.Utils.CommonResponses;
 using Mechanics.Application.Vehicles.Requests;
 using Mechanics.Application.Vehicles.Responses;
 using Mechanics.Application.Vehicles.Services;
@@ -15,7 +15,7 @@ namespace Mechanics.Api.Controllers.Vehicles;
 [ApiController]
 [ApiExplorerSettings(GroupName = "v1")]
 [Route("[controller]")]
-[Authorize(Policy = PolicyNames.EmployeesOnly)]
+[Authorize]
 public class VehiclesController(VehicleAppService service) : ControllerBase
 {
     /// <summary>
@@ -41,6 +41,7 @@ public class VehiclesController(VehicleAppService service) : ControllerBase
     /// <response code="200">Consulta executada.</response>
     /// <response code="400">Parâmetros inválidos.</response>
     [HttpGet]
+    [Authorize(Roles = $"{RoleNames.Administrator},{RoleNames.Attendant},{RoleNames.Mechanic}")]
     [Produces("application/json", Type = typeof(GetVehiclesResponse))]
     [ProducesResponseType(typeof(GetVehiclesResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -57,6 +58,7 @@ public class VehiclesController(VehicleAppService service) : ControllerBase
     /// <response code="200">Registro encontrado.</response>
     /// <response code="404">Registro não encontrado.</response>
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = $"{RoleNames.Administrator},{RoleNames.Attendant},{RoleNames.Mechanic},{RoleNames.Service}")]
     [Produces("application/json", Type = typeof(GetVehicleResponse))]
     [ProducesResponseType(typeof(GetVehicleResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

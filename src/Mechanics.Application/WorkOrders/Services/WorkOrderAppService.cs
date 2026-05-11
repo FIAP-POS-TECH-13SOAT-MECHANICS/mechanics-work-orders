@@ -54,7 +54,6 @@ public class WorkOrderAppService(
                 VehicleId = request.VehicleId,
                 AccessKey = WorkOrder.GenerateNewAccessKey(existingOrders),
                 Status = WorkOrderStatus.Received,
-                CreationDate = now,
                 LastUpdate = now,
                 CreatedByUserId = createdByUserId,
                 ReportedProblem = request.ReportedProblem,
