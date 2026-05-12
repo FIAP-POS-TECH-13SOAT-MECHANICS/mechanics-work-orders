@@ -1,12 +1,14 @@
-﻿using Mechanics.Domain.Vehicles;
+using Mechanics.Domain.Vehicles;
 
 namespace Mechanics.Application.Vehicles.Requests;
 
 public class UpdateVehicleRequest
 {
+    public Guid Id { get; set; }
+
     /// <summary>
-     ///     Fabricante do veículo. Opcional para atualização.
-     /// </summary>
+    ///     Fabricante do veículo. Opcional para atualização.
+    /// </summary>
     public string? Manufacturer { get; init; }
 
     /// <summary>
