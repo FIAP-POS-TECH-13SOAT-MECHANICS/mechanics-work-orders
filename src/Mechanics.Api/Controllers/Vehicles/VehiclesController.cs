@@ -87,7 +87,6 @@ public class VehiclesController(VehicleAppService service) : ControllerBase
     public async Task<IActionResult> UpdateVehicle(Guid id, UpdateVehicleRequest request,
         CancellationToken cancellationToken = default)
     {
-        request.Id = id;
         var response = await service.Update(id, request, cancellationToken);
         return response is null ? NotFound() : NoContent();
     }

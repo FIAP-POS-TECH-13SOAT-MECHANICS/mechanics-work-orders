@@ -1,4 +1,4 @@
-﻿using Mechanics.Application.WorkOrders.Responses;
+using Mechanics.Application.WorkOrders.Responses;
 using Mechanics.Application.WorkOrders.Services;
 using Mechanics.Infra.Security;
 using Mechanics.Infra.Security.Models;

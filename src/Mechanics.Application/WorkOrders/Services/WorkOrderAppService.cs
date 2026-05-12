@@ -61,6 +61,7 @@ public class WorkOrderAppService(
             };
 
             await db.WorkOrders.AddAsync(workOrder, cancellationToken);
+            await db.SaveChangesAsync(cancellationToken);
             await db.WorkOrderHistories.AddAsync(new WorkOrderHistory
             {
                 WorkOrderId = workOrder.Id,
@@ -68,7 +69,6 @@ public class WorkOrderAppService(
                 Details = "Work order created",
                 PerformedByUserId = createdByUserId,
             }, cancellationToken);
-
             await db.SaveChangesAsync(cancellationToken);
 
             var workOrderCreatedEvent = new WorkOrderCreatedEvent
