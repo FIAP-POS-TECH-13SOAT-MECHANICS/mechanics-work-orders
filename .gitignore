@@ -19,5 +19,6 @@ riderModule.iml
 *.sln.DotSettings.User
 
 appsettings.Development.json
+src/Mechanics.Api/appsettings.Development.json
 src/Mechanics.Api/keys
 !src/Mechanics.Api/keys/.gitkeep

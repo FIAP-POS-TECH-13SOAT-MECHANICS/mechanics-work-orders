@@ -16,7 +16,7 @@ namespace Mechanics.Api.Controllers.WorkOrders;
 [ApiController]
 [ApiExplorerSettings(GroupName = "v1")]
 [Route("[controller]")]
-[Authorize(Policy = PolicyNames.EmployeesOnly)]
+[Authorize]
 public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrentUserService currentUserService) : ControllerBase
 {
     /// <summary>
@@ -27,6 +27,7 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
     /// <response code="201">Ordem criada com sucesso.</response>
     /// <response code="400">Requisição inválida.</response>
     [HttpPost]
+    [Authorize(Roles = $"{RoleNames.Administrator},{RoleNames.Attendant},{RoleNames.Mechanic}")]
     [Consumes(typeof(CreateWorkOrderRequest), "application/json")]
     [Produces("application/json", Type = typeof(object))]
     [ProducesResponseType(typeof(object), (int)HttpStatusCode.Created)]
@@ -46,6 +47,7 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
     /// <response code="200">Registro encontrado.</response>
     /// <response code="404">Registro não encontrado.</response>
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = $"{RoleNames.Administrator},{RoleNames.Attendant},{RoleNames.Mechanic},{RoleNames.Service}")]
     [Produces("application/json", Type = typeof(GetWorkOrderResponse))]
     [ProducesResponseType(typeof(GetWorkOrderResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
@@ -88,6 +90,7 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
     /// <response code="400">Requisição inválida.</response>
     /// <response code="401">Usuário não autenticado.</response>
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = $"{RoleNames.Administrator},{RoleNames.Attendant},{RoleNames.Mechanic}")]
     [Consumes(typeof(UpdateWorkOrderRequest), "application/json")]
     [Produces("application/json", Type = typeof(object))]
     [ProducesResponseType(typeof(object), (int)HttpStatusCode.NoContent)]
@@ -109,6 +112,7 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
     /// <response code="200">Consulta executada.</response>
     /// <response code="400">Parâmetros inválidos.</response>
     [HttpGet]
+    [Authorize(Roles = $"{RoleNames.Administrator},{RoleNames.Attendant},{RoleNames.Mechanic}")]
     [Produces("application/json", Type = typeof(GetWorkOrdersResponse))]
     [ProducesResponseType(typeof(GetWorkOrdersResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
