@@ -25,4 +25,8 @@
     <ProjectReference Include="..\..\src\Mechanics.Domain\Mechanics.Domain.csproj" />
     <ProjectReference Include="..\..\src\Mechanics.Infra.Data\Mechanics.Infra.Data.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Tests\Notifications\" />
+  </ItemGroup>
 </Project>

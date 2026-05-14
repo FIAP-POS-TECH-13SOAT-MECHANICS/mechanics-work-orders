@@ -18,13 +18,7 @@ public class GetWorkOrderResponse
 
     public string? ReportedProblem { get; init; }
     public string? Observations { get; init; }
-
-    public IEnumerable<WorkOrderProductResponse>? Products { get; init; }
-    public IEnumerable<Guid>? ServiceCatalogIds { get; init; }
-}
-
-public class WorkOrderProductResponse
-{
-    public Guid ProductId { get; init; }
-    public int Quantity { get; init; }
+    public Guid? AssignedToUserId { get; init; }
+    public Guid? CreatedByUserId { get; init; }
+    public Guid? LastStatusChangedByUserId { get; init; }
 }

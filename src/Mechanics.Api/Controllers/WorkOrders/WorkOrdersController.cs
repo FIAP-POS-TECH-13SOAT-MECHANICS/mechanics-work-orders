@@ -2,7 +2,6 @@ using Mechanics.Application.WorkOrders.Requests;
 using Mechanics.Application.WorkOrders.Responses;
 using Mechanics.Application.WorkOrders.Services;
 using Mechanics.Domain.Auth;
-using Mechanics.Domain.WorkOrders;
 using Mechanics.Infra.Security;
 using Mechanics.Infra.Security.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -34,7 +33,8 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
     [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(CreateWorkOrderRequest request, CancellationToken cancellationToken)
     {
-        var response = await workOrderService.Create(request, cancellationToken);
+        var userId = currentUserService.GetData().UserId;
+        var response = await workOrderService.Create(request, userId, cancellationToken);
         return CreatedAtAction(nameof(Get), new { id = response.CreatedId }, response);
     }
 
@@ -54,24 +54,6 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
         var response = await workOrderService.Get(id, cancellationToken);
         if (response is null) return NotFound();
         return Ok(response);
-    }
-
-    /// <summary>
-    ///     Solicita aprovação do orçamento para a ordem.
-    /// </summary>
-    /// <param name="id">Identificador da ordem.</param>
-    /// <param name="cancellationToken">Token para cancelamento da operação.</param>
-    /// <response code="204">Solicitação realizada.</response>
-    /// <response code="400">Requisição inválida.</response>
-    [HttpPost("{id:guid}/request-approval")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> RequestApproval(Guid id, CancellationToken cancellationToken)
-    {
-        var userId = currentUserService.GetData().UserId;
-
-        await workOrderService.RequestApproval(id, userId, cancellationToken);
-        return NoContent();
     }
 
     /// <summary>
@@ -97,28 +79,7 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
     }
 
     /// <summary>
-    ///     Altera o status de uma ordem de serviço.
-    /// </summary>
-    /// <param name="id">Identificador da ordem.</param>
-    /// <param name="request">Novo status solicitado</param>
-    /// <param name="cancellationToken">Token para cancelamento da operação.</param>
-    /// <response code="204">Status alterado com sucesso.</response>
-    /// <response code="400">Requisição inválida.</response>
-    [HttpPost("{id:guid}/status")]
-    [Consumes(typeof(ChangeStatusRequest), "application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ChangeStatus(Guid id, [FromBody] ChangeStatusRequest request,
-        CancellationToken cancellationToken)
-    {
-        var userId = currentUserService.GetData().UserId;
-
-        await workOrderService.ChangeStatus(id, request.NewStatus, userId, request.Description, cancellationToken);
-        return NoContent();
-    }
-
-    /// <summary>
-    ///     Atualiza produtos, serviços e observações de uma ordem.
+    ///     Atualiza campos locais da ordem de serviço.
     /// </summary>
     /// <param name="id">Identificador da ordem.</param>
     /// <param name="request">Dados de atualização.</param>
@@ -141,50 +102,6 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
     }
 
     /// <summary>
-    ///     Inicia a execução da OS (Status: InProgress). (Mechanic)
-    /// </summary>
-    [HttpPost("{id:guid}/start")]
-    [Authorize(Roles = $"{RoleNames.Mechanic},{RoleNames.Administrator}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Start(Guid id, CancellationToken cancellationToken)
-    {
-        var userId = currentUserService.GetData().UserId;
-
-        await workOrderService.ChangeStatus(id, WorkOrderStatus.InProgress, userId, cancellationToken: cancellationToken);
-        return NoContent();
-    }
-
-    /// <summary>
-    ///     Marca a OS como concluída (Status: Completed). (Mechanic)
-    /// </summary>
-    [HttpPost("{id:guid}/complete")]
-    [Authorize(Roles = $"{RoleNames.Mechanic},{RoleNames.Administrator}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Complete(Guid id, CancellationToken cancellationToken)
-    {
-        var userId = currentUserService.GetData().UserId;
-
-        await workOrderService.ChangeStatus(id, WorkOrderStatus.Completed, userId,
-            cancellationToken: cancellationToken);
-        return NoContent();
-    }
-
-    /// <summary>
-    ///     Registra a entrega/retirada do veículo e encerra a OS. (Status: Delivered) (Attendant)
-    /// </summary>
-    [HttpPost("{id:guid}/deliver")]
-    [Authorize(Roles = $"{RoleNames.Attendant},{RoleNames.Administrator}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> Deliver(Guid id, CancellationToken cancellationToken)
-    {
-        var userId = currentUserService.GetData().UserId;
-
-        await workOrderService.ChangeStatus(id, WorkOrderStatus.Delivered, userId,
-            cancellationToken: cancellationToken);
-        return NoContent();
-    }
-
-    /// <summary>
     ///     Lista ordens de serviço com filtros opcionais e paginação.
     /// </summary>
     /// <param name="request">Parâmetros de filtro e paginação.</param>
@@ -198,23 +115,6 @@ public class WorkOrdersController(WorkOrderAppService workOrderService, ICurrent
     public async Task<IActionResult> GetWorkOrders([FromQuery] GetWorkOrdersRequest request, CancellationToken cancellationToken)
     {
         var response = await workOrderService.GetList(request, cancellationToken);
-        return Ok(response);
-    }
-
-    /// <summary>
-    ///     Obtém o tempo médio total estimado para execução dos serviços associados à ordem.
-    /// </summary>
-    /// <param name="id">Identificador da ordem.</param>
-    /// <param name="cancellationToken">Token para cancelamento da operação.</param>
-    /// <response code="200">Registro encontrado.</response>
-    /// <response code="404">Registro não encontrado.</response>
-    [HttpGet("{id:guid}/services/average-time")]
-    [Produces("application/json", Type = typeof(GetWorkOrderAverageTimeResponse))]
-    [ProducesResponseType(typeof(GetWorkOrderAverageTimeResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(void), StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetAverageServiceTime(Guid id, CancellationToken cancellationToken)
-    {
-        var response = await workOrderService.GetAverageServiceTime(id, cancellationToken);
         return Ok(response);
     }
 }

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36414.22 d17.14
+VisualStudioVersion = 17.14.36414.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mechanics.Api", "src\Mechanics.Api\Mechanics.Api.csproj", "{D91A88B0-ADB0-4D7B-9550-33D471F2F7B4}"
 EndProject
@@ -29,13 +29,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mechanics.Tests.Integration
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0. Solution Items", "0. Solution Items", "{22DCD109-03AE-40ED-842C-0D5CCCBB6ED4}"
 	ProjectSection(SolutionItems) = preProject
-		README.md = README.md
+		.dockerignore = .dockerignore
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
 		docker-compose.yml = docker-compose.yml
 		Dockerfile = Dockerfile
 		global.json = global.json
-		.dockerignore = .dockerignore
+		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mechanics.Infra.Integrations.EmailSender", "src\Mechanics.Infra.Integrations.EmailSender\Mechanics.Infra.Integrations.EmailSender.csproj", "{632A689B-B252-4001-BC2B-CEAA0B6D36FE}"
@@ -47,6 +47,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mechanics.Infra.Messaging", "src\Mechanics.Infra.Messaging\Mechanics.Infra.Messaging.csproj", "{54768EA7-71ED-4D25-AC2E-E8390E5708BC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mechanics.Tests.Behavior", "tests\Mechanics.Tests.Behavior\Mechanics.Tests.Behavior.csproj", "{5B32362D-86D3-4B01-81A1-2AD66D36F1D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mechanics.Infra.CrossServiceClient", "src\Mechanics.Infra.CrossServiceClient\Mechanics.Infra.CrossServiceClient.csproj", "{33257FFE-6230-4F5E-A921-F95F0FC93252}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -102,6 +104,10 @@ Global
 		{5B32362D-86D3-4B01-81A1-2AD66D36F1D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B32362D-86D3-4B01-81A1-2AD66D36F1D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B32362D-86D3-4B01-81A1-2AD66D36F1D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33257FFE-6230-4F5E-A921-F95F0FC93252}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{33257FFE-6230-4F5E-A921-F95F0FC93252}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{33257FFE-6230-4F5E-A921-F95F0FC93252}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{33257FFE-6230-4F5E-A921-F95F0FC93252}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -119,6 +125,7 @@ Global
 		{802D44B8-832F-470C-BE76-AF23CF80C278} = {13D1DC0A-156D-4EA3-8057-455165F1AE9B}
 		{54768EA7-71ED-4D25-AC2E-E8390E5708BC} = {13D1DC0A-156D-4EA3-8057-455165F1AE9B}
 		{5B32362D-86D3-4B01-81A1-2AD66D36F1D2} = {E428325E-4AFE-4E4F-BECD-056D9745D20B}
+		{33257FFE-6230-4F5E-A921-F95F0FC93252} = {13D1DC0A-156D-4EA3-8057-455165F1AE9B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {53D3EE4B-81FB-4300-B7DC-1F01FF115C38}

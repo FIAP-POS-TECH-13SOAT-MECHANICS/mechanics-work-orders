@@ -13,23 +13,8 @@ public class CreateWorkOrderRequestValidator : AbstractValidator<CreateWorkOrder
             .MaximumLength(1000)
             .WithMessage("ReportedProblem cannot exceed 1000 characters.");
 
-        When(r => r.Products != null, () =>
-        {
-            RuleForEach(r => r.Products).SetValidator(new WorkOrderProductRequestValidator());
-        });
-
-        When(r => r.ServiceCatalogIds != null, () =>
-        {
-            RuleForEach(r => r.ServiceCatalogIds).NotEmpty().WithMessage("ServiceCatalog id cannot be empty.");
-        });
-    }
-}
-
-public class WorkOrderProductRequestValidator : AbstractValidator<WorkOrderProductRequest>
-{
-    public WorkOrderProductRequestValidator()
-    {
-        RuleFor(request => request.ProductId).NotEmpty();
-        RuleFor(request => request.Quantity).GreaterThan(0);
+        RuleFor(r => r.Observations)
+            .MaximumLength(2000)
+            .WithMessage("Observations cannot exceed 2000 characters.");
     }
 }
