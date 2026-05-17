@@ -22,8 +22,8 @@ Gestão de clientes, veículos e ordens de serviço.
 
 ### Consumers
 
-- `status-changed` (fila preparada, implementação pendente)
-- `payment-approved` (fila preparada, implementação pendente)
+- `work-order-status-changed`
+- `payment-approved`
 
 ## Execução do projeto
 
@@ -103,3 +103,4 @@ Ao completar o PR, os testes são novamente executados e é feito o deploy no am
 | `main`    | Production  |
 | `release` | Staging     |
 | `develop` | Development |
+
