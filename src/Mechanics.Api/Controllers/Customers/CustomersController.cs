@@ -1,4 +1,4 @@
-﻿using Mechanics.Application.Customers.Requests;
+using Mechanics.Application.Customers.Requests;
 using Mechanics.Application.Customers.Responses;
 using Mechanics.Application.Customers.Services;
 using Mechanics.Application.Utils.CommonResponses;
@@ -15,7 +15,7 @@ namespace Mechanics.Api.Controllers.Customers;
 [ApiController]
 [ApiExplorerSettings(GroupName = "v1")]
 [Route("[controller]")]
-[Authorize(Policy = PolicyNames.EmployeesOnly)]
+[Authorize]
 public class CustomersController(CustomerAppService service) : ControllerBase
 {
     /// <summary>
@@ -60,6 +60,7 @@ public class CustomersController(CustomerAppService service) : ControllerBase
     /// <response code="200">Consulta executada.</response>
     /// <response code="400">Parâmetros inválidos.</response>
     [HttpGet]
+    [Authorize(Roles = $"{RoleNames.Administrator},{RoleNames.Attendant},{RoleNames.Mechanic}")]
     [Produces("application/json", Type = typeof(GetCustomersResponse))]
     [ProducesResponseType(typeof(GetCustomersResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -76,6 +77,7 @@ public class CustomersController(CustomerAppService service) : ControllerBase
     /// <response code="200">Registro encontrado.</response>
     /// <response code="404">Registro não encontrado.</response>
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = $"{RoleNames.Administrator},{RoleNames.Attendant},{RoleNames.Mechanic},{RoleNames.Service}")]
     [Produces("application/json", Type = typeof(GetCustomerResponse))]
     [ProducesResponseType(typeof(GetCustomerResponse), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetCustomer(Guid id, CancellationToken cancellationToken = default)

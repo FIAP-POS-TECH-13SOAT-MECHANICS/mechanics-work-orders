@@ -1,6 +1,4 @@
-﻿using Mechanics.Application.Customers.Requests;
-using Mechanics.Domain.Auth;
-using Mechanics.Infra.Data.Seeds;
+using Mechanics.Application.Customers.Requests;
 
 namespace Mechanics.Application.Customers.Events;
 
@@ -10,8 +8,7 @@ public class CustomerCreatedEvent
     public string CpfNumber { get; }
     public string Email { get; }
     public Guid CustomerId { get; }
-    public Guid RoleId { get; }
-    public string RoleName { get; }
+    public bool IsAdmin { get; }
 
     public CustomerCreatedEvent(Guid customerId, CreateIndividualCustomerRequest request)
     {
@@ -19,8 +16,7 @@ public class CustomerCreatedEvent
         CpfNumber = request.CpfNumber;
         Email = request.Email;
         CustomerId = customerId;
-        RoleId = RoleSeeds.GetSeeds().First(r => r.Name == RoleNames.CustomerUser).Id;
-        RoleName = RoleNames.CustomerUser;
+        IsAdmin = false;
     }
 
     public CustomerCreatedEvent(Guid customerId, CreateBusinessCustomerRequest request, bool isAdmin)
@@ -29,9 +25,6 @@ public class CustomerCreatedEvent
         CpfNumber = request.ResponsibleCpfNumber;
         Email = request.ResponsibleEmail;
         CustomerId = customerId;
-        RoleId = isAdmin
-            ? RoleSeeds.GetSeeds().First(r => r.Name == RoleNames.CustomerAdmin).Id
-            : RoleSeeds.GetSeeds().First(r => r.Name == RoleNames.CustomerUser).Id;
-        RoleName = isAdmin ? RoleNames.CustomerAdmin : RoleNames.CustomerUser;
+        IsAdmin = isAdmin;
     }
 }

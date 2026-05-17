@@ -1,8 +1,5 @@
-using Mechanics.Domain.Auth;
 using Mechanics.Domain.Base;
-using Mechanics.Domain.Base.Validation;
 using Mechanics.Domain.Customers;
-using Mechanics.Domain.ServicesCatalog;
 using Mechanics.Domain.Vehicles;
 
 namespace Mechanics.Domain.WorkOrders;
@@ -10,7 +7,7 @@ namespace Mechanics.Domain.WorkOrders;
 /// <summary>
 ///     Representa uma ordem de serviço vinculada a um cliente e veículo.
 /// </summary>
-public class WorkOrder : AbstractEntity, IValidatable
+public class WorkOrder : AbstractEntity
 {
     public required Guid CustomerId { get; init; }
     public Customer? Customer { get; init; }
@@ -27,16 +24,6 @@ public class WorkOrder : AbstractEntity, IValidatable
     public DateTime LastUpdate { get; set; }
 
     /// <summary>
-    ///     Produtos utilizados na ordem.
-    /// </summary>
-    public ICollection<WorkOrderProduct>? Products { get; set; }
-
-    /// <summary>
-    ///     Serviços executados na ordem.
-    /// </summary>
-    public ICollection<ServiceCatalog>? ServiceCatalog { get; set; }
-
-    /// <summary>
     ///     Problema relatado pelo cliente.
     /// </summary>
     public string? ReportedProblem { get; init; }
@@ -47,29 +34,14 @@ public class WorkOrder : AbstractEntity, IValidatable
     public string? Observations { get; set; }
 
     /// <summary>
-    ///     Data em que a ordem foi colocada em aguardando aprovação.
-    /// </summary>
-    public DateTime? ApprovalRequestedAt { get; set; }
-
-    /// <summary>
-    ///     Data em que o cliente aprovou a ordem.
-    /// </summary>
-    public DateTime? ApprovedAt { get; set; }
-
-    /// <summary>
     ///     Data da entrega/retirada do veículo.
     /// </summary>
     public DateTime? DeliveredAt { get; set; }
 
     /// <summary>
-    ///     Indica se a ordem foi cancelada.
-    /// </summary>
-    public bool IsCancelled { get; set; }
-
-    /// <summary>
     ///     Usuário que realizou a última alteração de status.
     /// </summary>
-    public Guid? LastStatusChangeBy { get; set; }
+    public Guid? LastStatusChangedByUserId { get; set; }
 
     /// <summary>
     ///     Usuário a quem a OS foi atribuída (mecânico).
@@ -77,9 +49,9 @@ public class WorkOrder : AbstractEntity, IValidatable
     public Guid? AssignedToUserId { get; set; }
 
     /// <summary>
-    ///     Navegação para o usuário atribuído.
+    ///     Usuário que criou a OS (referência externa).
     /// </summary>
-    public User? AssignedToUser { get; set; }
+    public Guid? CreatedByUserId { get; set; }
 
     /// <summary>
     ///     Gera uma nova chave de acesso única por cliente.
@@ -99,12 +71,4 @@ public class WorkOrder : AbstractEntity, IValidatable
         }
     }
 
-    public void Validate(ValidationBuilder builder)
-    {
-        if (Products is null)
-            return;
-
-        foreach (var workOrderProduct in Products)
-            builder.AddValidation(workOrderProduct.Validate, nameof(Products));
-    }
 }

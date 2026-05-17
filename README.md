@@ -1,6 +1,6 @@
-# SERVICE_NAME
+# Work Orders
 
-Breve descrição do serviço.
+Gestão de clientes, veículos e ordens de serviço.
 
 ## Definição do ambiente
 
@@ -8,6 +8,22 @@ Breve descrição do serviço.
 - Banco de dados: MSSQL 2025
 - Serviço de E-mail: MailPit
 - Chave pública para JWT: AWS Secrets Manager
+
+## Serviços consumidos
+
+- [Identity](https://github.com/FIAP-POS-TECH-13SOAT-MECHANICS/mechanics-identity): validação de usuário externo por REST (CrossServiceClient).
+
+## Messageria
+
+### Publishers
+
+- `customer-created`
+- `work-order-created`
+
+### Consumers
+
+- `work-order-status-changed`
+- `payment-approved`
 
 ## Execução do projeto
 
@@ -58,13 +74,24 @@ docker compose up -d --build
 
 Após o processo concluir, o projeto estará disponível nas seguintes URLs:
 
-- Swagger do projeto: <http://localhost:5000/api/swagger>
+- Swagger do projeto: <http://localhost:5000/work-orders/swagger>
 - Cliente de e-mail: <http://localhost:8025>
 
-> **Opcional**
-> Utilize o script [dev-seeds](./dev-seeds/README.md) para popular o banco com dados de exemplo.
-
 Utilize o script `invoke-getToken.ps1` para obter um token de acesso. É necessário que o serviço [Mechanics.Auth](https://github.com/FIAP-POS-TECH-13SOAT-MECHANICS/mechanics-auth) já esteja em execução.
+
+## Migrações
+
+Criar migração:
+
+```powershell
+dotnet ef migrations add Init --project src/Mechanics.Infra.Data --startup-project src/Mechanics.Api
+```
+
+Aplicar no banco:
+
+```powershell
+dotnet ef database update --project src/Mechanics.Infra.Data --startup-project src/Mechanics.Api
+```
 
 ## Pipeline de CI/CD
 
@@ -76,3 +103,4 @@ Ao completar o PR, os testes são novamente executados e é feito o deploy no am
 | `main`    | Production  |
 | `release` | Staging     |
 | `develop` | Development |
+

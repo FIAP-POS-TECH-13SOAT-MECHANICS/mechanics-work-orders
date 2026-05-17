@@ -1,4 +1,3 @@
-﻿using Mechanics.Infra.Data.Seeds;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
@@ -12,13 +11,25 @@ public class TestTokenGenerator(RSA rsa)
 
     public string GenerateAccessTokenByRoleName(string roleName)
     {
-        var roleId = RoleSeeds.GetSeeds().First(r => r.Name == roleName).Id;
-        var user = UserSeeds.GetSeeds().First(u => u.RoleId == roleId);
+        var userId = roleName switch
+        {
+            "Administrator" => new Guid("11111111-1111-1111-1111-111111111111"),
+            "Attendant" => new Guid("22222222-2222-2222-2222-222222222222"),
+            "Mechanic" => new Guid("33333333-3333-3333-3333-333333333333"),
+            "CustomerAdmin" => new Guid("44444444-4444-4444-4444-444444444444"),
+            "CustomerUser" => new Guid("55555555-5555-5555-5555-555555555555"),
+            "Service" => new Guid("66666666-6666-6666-6666-666666666666"),
+            _ => Guid.NewGuid(),
+        };
+
+        var customerId = roleName.StartsWith("Customer", StringComparison.Ordinal)
+            ? new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+            : Guid.Empty;
 
         var claims = new List<Claim>
         {
-            new("sub", user.Id.ToString()),
-            new("customerId", (user.CustomerId ?? Guid.Empty).ToString()),
+            new("sub", userId.ToString()),
+            new("customerId", customerId.ToString()),
             new("role", roleName),
         };
 

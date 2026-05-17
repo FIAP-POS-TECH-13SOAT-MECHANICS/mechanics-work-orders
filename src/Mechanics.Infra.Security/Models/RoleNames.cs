@@ -28,4 +28,9 @@ public static class RoleNames
     ///     Permite gerenciar outros usuários do mesmo cliente.
     /// </summary>
     public const string CustomerAdmin = "CUSTOMER_ADMIN";
+
+    /// <summary>
+    ///     Role específica para comunicação entre microsserviços.
+    /// </summary>
+    public const string Service = "SERVICE";
 }

@@ -1,4 +1,4 @@
-﻿using Mechanics.Domain.Vehicles;
+using Mechanics.Domain.Vehicles;
 
 namespace Mechanics.Application.Vehicles.Requests;
 

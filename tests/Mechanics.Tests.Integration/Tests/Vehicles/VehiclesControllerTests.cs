@@ -39,7 +39,7 @@ public class VehiclesControllerTests
         };
 
         // Act
-        var httpResponse = await client.PostAsJsonAsync("api/vehicles", request, TestContext.CancellationTokenSource.Token);
+        var httpResponse = await client.PostAsJsonAsync("work-orders/vehicles", request, TestContext.CancellationTokenSource.Token);
 
         // Assert
         Assert.AreEqual(HttpStatusCode.Created, httpResponse.StatusCode);
@@ -62,7 +62,7 @@ public class VehiclesControllerTests
             Chassis = "9BW9ZZ377VT004252",
             OwnerId = ownerId,
         };
-        var createResponse = await client.PostAsJsonAsync("api/vehicles", createRequest, TestContext.CancellationTokenSource.Token);
+        var createResponse = await client.PostAsJsonAsync("work-orders/vehicles", createRequest, TestContext.CancellationTokenSource.Token);
         var created = await createResponse.Content.ReadFromJsonAsync<CreateItemResponse>(TestContext.CancellationTokenSource.Token);
         var vehicleId = created!.CreatedId;
 
@@ -72,11 +72,11 @@ public class VehiclesControllerTests
             Color = VehicleColor.White,
             Year = "2021",
         };
-        var updateUri = $"api/vehicles/{vehicleId}";
+        var updateUri = $"work-orders/vehicles/{vehicleId}";
         var updateResponse = await client.PutAsJsonAsync(updateUri, updateRequest, TestContext.CancellationTokenSource.Token);
 
         Assert.AreEqual(HttpStatusCode.NoContent, updateResponse.StatusCode);
-        var getResponse = await client.GetAsync($"api/vehicles/{vehicleId}", TestContext.CancellationTokenSource.Token);
+        var getResponse = await client.GetAsync($"work-orders/vehicles/{vehicleId}", TestContext.CancellationTokenSource.Token);
         var vehicle = await getResponse.Content.ReadFromJsonAsync<GetVehicleResponse>(
             _serializarOptions, TestContext.CancellationTokenSource.Token);
         Assert.IsNotNull(vehicle);
@@ -103,7 +103,7 @@ public class VehiclesControllerTests
         };
 
         var createdCustomer =
-            await client.PostAsJsonAsync("api/customers/individual", customerRequest, TestContext.CancellationTokenSource.Token);
+            await client.PostAsJsonAsync("work-orders/customers/individual", customerRequest, TestContext.CancellationTokenSource.Token);
         var customerResponse =
             await createdCustomer.Content.ReadFromJsonAsync<CreateItemResponse>(TestContext.CancellationTokenSource.Token);
         return (client, customerResponse!.CreatedId);
