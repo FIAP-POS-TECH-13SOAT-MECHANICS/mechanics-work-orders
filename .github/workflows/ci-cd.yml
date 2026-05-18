@@ -22,10 +22,6 @@ jobs:
   tests:
     name: Run tests
     uses: FIAP-POS-TECH-13SOAT-MECHANICS/mechanics-infra/.github/workflows/dotnet-tests.yml@main
-    with:
-      enable_sonar: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' }}
-      sonar_project_key: ${{ vars.SONAR_PROJECT_KEY }}
-    secrets: inherit
 
   resolve-environment:
     name: Resolve environment name

@@ -1,4 +1,3 @@
-using Mechanics.Application.WorkOrders.Consumers;
 using Mechanics.Infra.Messaging.Extensions;
 using Mechanics.Infra.Messaging.Options;
 using Microsoft.Extensions.Configuration;
@@ -18,8 +17,7 @@ public static class MessagingExtensions
             if (configuration.GetSection(nameof(MessagingOptions)).Get<MessagingOptions>()!.DisableConsumers)
                 return;
 
-            builder.AddConsumer<WorkOrderStatusChangedConsumer, WorkOrderStatusChangedEvent>();
-            builder.AddConsumer<PaymentApprovedConsumer, PaymentApprovedEvent>();
+            // Consumers de status-changed e payment-approved.
         });
 
         return services;
