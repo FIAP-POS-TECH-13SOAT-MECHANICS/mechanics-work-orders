@@ -68,6 +68,7 @@ public static class WorkOrderEmailTemplates
         WorkOrderStatus.PendingApproval => "Aguardando aprovação",
         WorkOrderStatus.InProgress => "Em execução",
         WorkOrderStatus.Completed => "Finalizada",
+        WorkOrderStatus.ReadyForDelivery => "Pronto para retirada",
         WorkOrderStatus.Delivered => "Entregue",
         _ => throw new ArgumentOutOfRangeException(nameof(status), status, null),
     };

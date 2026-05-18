@@ -1,4 +1,4 @@
-﻿using Mechanics.Application.Utils.PagedList;
+using Mechanics.Application.Utils.PagedList;
 using Mechanics.Domain.WorkOrders;
 
 namespace Mechanics.Application.WorkOrders.Requests;
@@ -21,7 +21,8 @@ public class GetWorkOrdersRequest : PaginatedListRequest
     public DateTime? DateOfTheDay { get; init; }
 
     /// <summary>
-    ///     Incluir OSs com status <see cref="WorkOrderStatus.Completed"/> ou <see cref="WorkOrderStatus.Delivered"/>.
+    ///     Incluir OSs com status <see cref="WorkOrderStatus.Completed"/>,
+    ///     <see cref="WorkOrderStatus.ReadyForDelivery"/> ou <see cref="WorkOrderStatus.Delivered"/>.
     /// </summary>
     public bool IncludeCompleted { get; init; }
 }

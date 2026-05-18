@@ -37,5 +37,5 @@ secrets:
 queueNames:
   CustomerCreated: customer-created
   WorkOrderCreated: work-order-created
-  StatusChanged: status-changed
+  WorkOrderStatusChanged: work-order-status-changed
   PaymentApproved: payment-approved

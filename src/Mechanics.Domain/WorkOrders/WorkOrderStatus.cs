@@ -1,11 +1,12 @@
-﻿namespace Mechanics.Domain.WorkOrders;
+namespace Mechanics.Domain.WorkOrders;
 
 public enum WorkOrderStatus
 {
-    Received,
-    UnderDiagnosis,
-    PendingApproval,
-    InProgress,
-    Completed,
-    Delivered,
+    Received = 0,
+    UnderDiagnosis = 1,
+    PendingApproval = 2,
+    InProgress = 3,
+    Completed = 4,
+    Delivered = 5,
+    ReadyForDelivery = 6,
 }
