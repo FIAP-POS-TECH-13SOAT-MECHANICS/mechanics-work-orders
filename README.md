@@ -123,3 +123,18 @@ Ao completar o PR, os testes são novamente executados e é feito o deploy no am
 | `main`    | Production  |
 | `release` | Staging     |
 | `develop` | Development |
+
+### SonarQube no CI
+
+Este repositório usa workflow reutilizável do `mechanics-infra` para testes e análise SonarQube.
+
+Configurações necessárias em `Settings > Secrets and variables > Actions`:
+
+- Secret `SONAR_HOST_URL`
+- Secret `SONAR_TOKEN`
+- Variable `SONAR_PROJECT_KEY` (valor: `fiap-mechanics-work-orders`)
+
+A análise é habilitada em:
+
+- `pull_request` com destino em `main`;
+- `workflow_dispatch` quando executado na branch `main`.
