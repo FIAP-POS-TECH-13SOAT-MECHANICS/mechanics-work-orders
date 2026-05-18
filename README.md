@@ -9,21 +9,41 @@ Gestão de clientes, veículos e ordens de serviço.
 - Serviço de E-mail: MailPit
 - Chave pública para JWT: AWS Secrets Manager
 
-## Serviços consumidos
+```mermaid
+graph TD
+    GW[API Gateway] -->|HTTP| WO[WorkOrders Service]
+    WO -->|REST síncrono| ID[Identity Service]
 
-- [Identity](https://github.com/FIAP-POS-TECH-13SOAT-MECHANICS/mechanics-identity): validação de usuário externo por REST (CrossServiceClient).
+    WO -->|publica| CC[SQS: customer-created]
+    WO -->|publica| WOC[SQS: work-order-created]
+    WOSC[SQS: work-order-status-changed] -->|consumido por| WO
+    PA[SQS: payment-approved] -->|consumido por| WO
+
+    WO -->|persiste| DB[(RDS: MS SQL Server)]
+    WO -->|envia e-mail| MPT[MailPit]
+```
 
 ## Messageria
 
+As filas devem ser criadas pela camada `messaging` do [repositório de infraestrutura](https://github.com/FIAP-POS-TECH-13SOAT-MECHANICS/mechanics-infra).
+
 ### Publishers
 
-- `customer-created`
-- `work-order-created`
+| Fila                                        | Descrição                                                        |
+|---------------------------------------------|------------------------------------------------------------------|
+| `fiap-mechanics-{env}-customer-created`     | Publicado ao cadastrar um novo cliente, para criação de acesso.  |
+| `fiap-mechanics-{env}-work-order-created`   | Publicado ao abrir uma nova ordem de serviço.                    |
 
 ### Consumers
 
-- `work-order-status-changed`
-- `payment-approved`
+| Fila                                             | Descrição                                                      |
+|--------------------------------------------------|----------------------------------------------------------------|
+| `fiap-mechanics-{env}-work-order-status-changed` | Atualiza o status da OS conforme progresso no Execution.       |
+| `fiap-mechanics-{env}-payment-approved`          | Marca a OS como paga, liberando a retirada do veículo.         |
+
+## Serviços consumidos
+
+- [Identity](https://github.com/FIAP-POS-TECH-13SOAT-MECHANICS/mechanics-identity): validação de usuário externo por REST (CrossServiceClient).
 
 ## Execução do projeto
 
