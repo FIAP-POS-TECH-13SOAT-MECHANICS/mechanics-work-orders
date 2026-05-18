@@ -38,8 +38,6 @@ public class WorkOrder : AbstractEntity
     /// </summary>
     public DateTime? DeliveredAt { get; set; }
 
-    public DateTimeOffset? PaidAt { get; set; }
-
     /// <summary>
     ///     Usuário que realizou a última alteração de status.
     /// </summary>

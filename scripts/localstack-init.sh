@@ -3,7 +3,7 @@
 QUEUES=(
   "fiap-mechanics-dev-customer-created"
   "fiap-mechanics-dev-work-order-created"
-  "fiap-mechanics-dev-work-order-status-changed"
+  "fiap-mechanics-dev-status-changed"
   "fiap-mechanics-dev-payment-approved"
 )
 

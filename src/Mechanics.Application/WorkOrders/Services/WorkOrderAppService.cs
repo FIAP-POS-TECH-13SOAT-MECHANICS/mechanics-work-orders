@@ -5,7 +5,6 @@ using Mechanics.Application.Observability;
 using Mechanics.Application.Utils;
 using Mechanics.Application.Utils.CommonResponses;
 using Mechanics.Application.Utils.PagedList;
-using Mechanics.Application.WorkOrders.Consumers;
 using Mechanics.Application.WorkOrders.Events;
 using Mechanics.Application.WorkOrders.Requests;
 using Mechanics.Application.WorkOrders.Responses;
@@ -194,10 +193,8 @@ public class WorkOrderAppService(
             .AsNoTracking()
             .Where(item => !hasCustomer || item.CustomerId == request.CustomerId!.Value)
             .Where(item => !hasVehicle || item.VehicleId == request.VehicleId!.Value)
-            .Where(item => request.IncludeCompleted ||
-                item.Status != WorkOrderStatus.Completed &&
-                item.Status != WorkOrderStatus.ReadyForDelivery &&
-                item.Status != WorkOrderStatus.Delivered)
+            .Where(item =>
+                request.IncludeCompleted || item.Status != WorkOrderStatus.Completed && item.Status != WorkOrderStatus.Delivered)
             .OrderByDescending(item => item.Status)
             .ThenBy(item => item.CreationDate);
 
@@ -236,42 +233,37 @@ public class WorkOrderAppService(
         EntityNotFoundException.ThrowIfNull(workOrder, workOrderId);
 
         var previousStatus = workOrder.Status;
-        var statusAfterTransition = (newStatus == WorkOrderStatus.Completed && workOrder.PaidAt.HasValue)
-            ? WorkOrderStatus.ReadyForDelivery
-            : newStatus;
-
-        if (previousStatus == statusAfterTransition)
+        if (previousStatus == newStatus)
         {
-            logger.LogInformation("Work order {WorkOrderId} already in status {Status}. Ignoring.", workOrder.Id, statusAfterTransition);
+            logger.LogInformation("Work order {WorkOrderId} already in status {Status}. Ignoring.", workOrder.Id, newStatus);
             return false;
         }
-
-        if (newStatus == WorkOrderStatus.Delivered && !workOrder.PaidAt.HasValue)
-            throw new BusinessException("Work order must be paid before delivery.");
 
         if (!IsTransitionAllowed(previousStatus, newStatus))
             throw new BusinessException($"Invalid status transition from {previousStatus} to {newStatus}.");
 
         var timeInPreviousStatus = DateTime.UtcNow - workOrder.LastUpdate;
 
-        workOrder.Status = statusAfterTransition;
+        workOrder.Status = newStatus;
         workOrder.LastStatusChangedByUserId = performedByUserId;
         workOrder.LastUpdate = DateTime.UtcNow;
-        if (statusAfterTransition == WorkOrderStatus.Delivered && workOrder.DeliveredAt is null)
+        if (newStatus == WorkOrderStatus.Delivered && workOrder.DeliveredAt is null)
             workOrder.DeliveredAt = DateTime.UtcNow;
 
         await db.WorkOrderHistories.AddAsync(new WorkOrderHistory
         {
             WorkOrderId = workOrder.Id,
             Action = "StatusChanged",
-            Details = BuildStatusChangedDetails(previousStatus, newStatus, statusAfterTransition, comment),
+            Details = comment is null
+                ? $"From {previousStatus} to {newStatus}"
+                : $"From {previousStatus} to {newStatus}. Comment: {comment}",
             PerformedByUserId = performedByUserId,
         }, cancellationToken);
 
         var tags = new TagList
         {
             { "previous_status", previousStatus.ToString() },
-            { "new_status", statusAfterTransition.ToString() },
+            { "new_status", newStatus.ToString() },
         };
 
         AppMetrics.TimeInStatusTotalSeconds.Add(Math.Round(timeInPreviousStatus.TotalSeconds, 2), tags);
@@ -292,7 +284,7 @@ public class WorkOrderAppService(
             await emailService.SendWorkOrderStatusChanged(customer, workOrder, previousStatus, cancellationToken);
             AppMetrics.EmailsSent.Add(1, new TagList { { "template", "status_changed" } });
 
-            if (statusAfterTransition == WorkOrderStatus.Delivered)
+            if (newStatus == WorkOrderStatus.Delivered)
             {
                 await emailService.SendWorkOrderDeliveredSurvey(customer, workOrder, cancellationToken);
                 AppMetrics.EmailsSent.Add(1, new TagList { { "template", "delivered_survey" } });
@@ -304,70 +296,6 @@ public class WorkOrderAppService(
             logger.LogWarning(ex, "Failed to send status email notifications for WorkOrder {WorkOrderId}", workOrder.Id);
         }
 
-        return true;
-    }
-
-    public async Task<bool> ApplyStatusChangedEvent(WorkOrderStatusChangedEvent message,
-        CancellationToken cancellationToken = default)
-    {
-        if (!Enum.TryParse<WorkOrderStatus>(message.NewStatus, true, out var newStatus))
-            throw new BusinessException($"Invalid status value '{message.NewStatus}'.");
-
-        var currentWorkOrder = await db.WorkOrders.FirstOrDefaultAsync(item => item.Id == message.WorkOrderId, cancellationToken);
-        EntityNotFoundException.ThrowIfNull(currentWorkOrder, message.WorkOrderId);
-
-        var changed = await ChangeStatus(
-            message.WorkOrderId,
-            newStatus,
-            message.LastStatusChangeBy,
-            $"Sync from work-order-status-changed event ({message.OldStatus} -> {message.NewStatus})",
-            cancellationToken);
-
-        currentWorkOrder.LastUpdate = message.LastUpdate.UtcDateTime;
-        await db.SaveChangesAsync(cancellationToken);
-
-        return changed;
-    }
-
-    public async Task<bool> ApplyPaymentApprovedEvent(PaymentApprovedEvent message,
-        CancellationToken cancellationToken = default)
-    {
-        var workOrder = await db.WorkOrders.FirstOrDefaultAsync(item => item.Id == message.WorkOrderId, cancellationToken);
-        EntityNotFoundException.ThrowIfNull(workOrder, message.WorkOrderId);
-
-        if (message.PaidAt == default)
-            throw new BusinessException("Invalid payment-approved event: PaidAt is required.");
-
-        if (workOrder.PaidAt.HasValue)
-        {
-            logger.LogInformation("Work order {WorkOrderId} already has approved payment. Ignoring.", workOrder.Id);
-            return false;
-        }
-
-        workOrder.PaidAt = message.PaidAt;
-        workOrder.LastUpdate = DateTime.UtcNow;
-        var promotedToReadyForDelivery = workOrder.Status == WorkOrderStatus.Completed;
-        if (promotedToReadyForDelivery)
-            workOrder.Status = WorkOrderStatus.ReadyForDelivery;
-
-        await db.WorkOrderHistories.AddAsync(new WorkOrderHistory
-        {
-            WorkOrderId = workOrder.Id,
-            Action = "PaymentApproved",
-            Details = $"Payment approved at {message.PaidAt:O}. PromotedToReadyForDelivery: {promotedToReadyForDelivery}",
-        }, cancellationToken);
-
-        if (promotedToReadyForDelivery)
-        {
-            await db.WorkOrderHistories.AddAsync(new WorkOrderHistory
-            {
-                WorkOrderId = workOrder.Id,
-                Action = "StatusChanged",
-                Details = $"Sync from payment-approved event. From {WorkOrderStatus.Completed} to {WorkOrderStatus.ReadyForDelivery}.",
-            }, cancellationToken);
-        }
-
-        await db.SaveChangesAsync(cancellationToken);
         return true;
     }
 
@@ -399,27 +327,9 @@ public class WorkOrderAppService(
         {
             (WorkOrderStatus.Received, WorkOrderStatus.UnderDiagnosis) => true,
             (WorkOrderStatus.UnderDiagnosis, WorkOrderStatus.PendingApproval) => true,
-            (WorkOrderStatus.PendingApproval, WorkOrderStatus.UnderDiagnosis) => true,
             (WorkOrderStatus.PendingApproval, WorkOrderStatus.InProgress) => true,
             (WorkOrderStatus.InProgress, WorkOrderStatus.Completed) => true,
-            (WorkOrderStatus.Completed, WorkOrderStatus.ReadyForDelivery) => true,
-            (WorkOrderStatus.ReadyForDelivery, WorkOrderStatus.Delivered) => true,
+            (WorkOrderStatus.Completed, WorkOrderStatus.Delivered) => true,
             _ => false,
         };
-
-    private static string BuildStatusChangedDetails(
-        WorkOrderStatus previousStatus,
-        WorkOrderStatus requestedStatus,
-        WorkOrderStatus finalStatus,
-        string? comment)
-    {
-        if (requestedStatus == finalStatus)
-            return comment is null
-                ? $"From {previousStatus} to {requestedStatus}"
-                : $"From {previousStatus} to {requestedStatus}. Comment: {comment}";
-
-        return comment is null
-            ? $"From {previousStatus} to {requestedStatus}. Auto-transition to {finalStatus} due approved payment."
-            : $"From {previousStatus} to {requestedStatus}. Auto-transition to {finalStatus} due approved payment. Comment: {comment}";
-    }
 }
