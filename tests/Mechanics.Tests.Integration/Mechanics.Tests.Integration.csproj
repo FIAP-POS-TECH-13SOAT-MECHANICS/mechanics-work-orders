@@ -8,6 +8,8 @@
     <IsTestProject>true</IsTestProject>
 
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <ExcludeByFile>**/Migrations/*.cs,**/obj/**/*.cs</ExcludeByFile>
+    <ExcludeByAttribute>GeneratedCodeAttribute,CompilerGeneratedAttribute,ExcludeFromCodeCoverageAttribute</ExcludeByAttribute>
   </PropertyGroup>
 
   <ItemGroup>
