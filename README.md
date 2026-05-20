@@ -2,7 +2,7 @@
 
 Gestão de clientes, veículos e ordens de serviço.
 
-[![Quality Gate Status](http://34.231.107.126/api/project_badges/measure?project=fiap-mechanics-billing&metric=alert_status&token=sqb_73f497125149c363be1d11973a53bb7ff3f17106)](http://34.231.107.126/dashboard?id=fiap-mechanics-billing)
+[![Quality Gate Status](http://34.231.107.126/api/project_badges/measure?project=fiap-mechanics-work-orders&metric=alert_status&token=sqb_3aa2d35f86e1c9fca4691be311faad15cf322dfa)](http://34.231.107.126/dashboard?id=fiap-mechanics-work-orders)
 
 ## Definição do ambiente
 
