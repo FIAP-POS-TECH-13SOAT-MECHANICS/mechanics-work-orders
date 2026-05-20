@@ -1,7 +1,9 @@
-﻿using System.Text.RegularExpressions;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 
 namespace Mechanics.Domain.Base.Validation;
 
+[ExcludeFromCodeCoverage]
 public static partial class RegexUtils
 {
     [GeneratedRegex(@"^\d{11}$", RegexOptions.Compiled)]
@@ -19,3 +21,4 @@ public static partial class RegexUtils
     [GeneratedRegex(@"^\d{4}$", RegexOptions.Compiled)]
     public static partial Regex Year();
 }
+
