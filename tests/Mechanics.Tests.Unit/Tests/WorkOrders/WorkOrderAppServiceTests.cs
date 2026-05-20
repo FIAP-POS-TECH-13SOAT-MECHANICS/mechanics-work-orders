@@ -346,6 +346,118 @@ public class WorkOrderAppServiceTests
         Assert.AreEqual(WorkOrderStatus.UnderDiagnosis, workOrder.Status);
     }
 
+    [TestMethod("Falha ao atribuir quando usuário não existe")]
+    public async Task It_ShouldThrow_WhenAssignedUserDoesNotExist()
+    {
+        var customerId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var assigneeId = Guid.NewGuid();
+
+        _userServiceMock
+            .Setup(service => service.GetUserById(assigneeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((UserResponse?)null);
+
+        await using var context = new DbContextTestBuilder()
+            .WithData([CustomerMocks.CreateCustomerPf(customerId)])
+            .WithData([VehicleMocks.CreateVehicle(vehicleId, customerId)])
+            .Build();
+
+        var service = BuildService(context);
+        var created = await service.Create(new CreateWorkOrderRequest
+        {
+            VehicleId = vehicleId,
+            ReportedProblem = "Motor falhando",
+            Observations = "Sem potência na subida",
+        }, Guid.NewGuid(), CancellationToken.None);
+
+        await Assert.ThrowsExactlyAsync<BusinessException>(async () =>
+            await service.Assign(created.CreatedId, assigneeId, Guid.NewGuid(), null, CancellationToken.None));
+    }
+
+    [TestMethod("Falha ao atribuir quando usuário não é mecânico")]
+    public async Task It_ShouldThrow_WhenAssignedUserIsNotMechanic()
+    {
+        var customerId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var assigneeId = Guid.NewGuid();
+
+        _userServiceMock
+            .Setup(service => service.GetUserById(assigneeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserResponse
+            {
+                Id = assigneeId,
+                FullName = "Atendente Teste",
+                CpfNumber = "11144477735",
+                Role = new RoleResponse
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "ATTENDANT",
+                },
+            });
+
+        await using var context = new DbContextTestBuilder()
+            .WithData([CustomerMocks.CreateCustomerPf(customerId)])
+            .WithData([VehicleMocks.CreateVehicle(vehicleId, customerId)])
+            .Build();
+
+        var service = BuildService(context);
+        var created = await service.Create(new CreateWorkOrderRequest
+        {
+            VehicleId = vehicleId,
+            ReportedProblem = "Falha no freio",
+            Observations = "Pedal baixo",
+        }, Guid.NewGuid(), CancellationToken.None);
+
+        await Assert.ThrowsExactlyAsync<BusinessException>(async () =>
+            await service.Assign(created.CreatedId, assigneeId, Guid.NewGuid(), null, CancellationToken.None));
+    }
+
+    [TestMethod("Atribuição não força auto-transição quando OS já saiu de Received")]
+    public async Task It_ShouldNotAutoChangeStatus_WhenWorkOrderIsNotReceived()
+    {
+        var customerId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var assigneeId = Guid.NewGuid();
+        var performedBy = Guid.NewGuid();
+
+        _userServiceMock
+            .Setup(service => service.GetUserById(assigneeId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new UserResponse
+            {
+                Id = assigneeId,
+                FullName = "Mecânico Teste",
+                CpfNumber = "11144477735",
+                Role = new RoleResponse
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "MECHANIC",
+                },
+            });
+
+        await using var context = new DbContextTestBuilder()
+            .WithData([CustomerMocks.CreateCustomerPf(customerId)])
+            .WithData([VehicleMocks.CreateVehicle(vehicleId, customerId)])
+            .Build();
+
+        var service = BuildService(context);
+        var created = await service.Create(new CreateWorkOrderRequest
+        {
+            VehicleId = vehicleId,
+            ReportedProblem = "Ruído em curva",
+            Observations = "Avaliar suspensão",
+        }, Guid.NewGuid(), CancellationToken.None);
+
+        await service.ChangeStatus(created.CreatedId, WorkOrderStatus.UnderDiagnosis, performedBy, null, CancellationToken.None);
+        await service.Assign(created.CreatedId, assigneeId, performedBy, null, CancellationToken.None);
+
+        var statusChanges = await context.WorkOrderHistories
+            .AsNoTracking()
+            .Where(item => item.WorkOrderId == created.CreatedId && item.Action == "StatusChanged")
+            .ToListAsync(TestContext.CancellationTokenSource.Token);
+
+        Assert.AreEqual(1, statusChanges.Count);
+    }
+
     [TestMethod("Mudança de status é idempotente para mensagens duplicadas")]
     public async Task It_ShouldBeIdempotent_WhenStatusIsRepeated()
     {
@@ -412,6 +524,159 @@ public class WorkOrderAppServiceTests
                 It.IsAny<WorkOrder>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [TestMethod("Falha ao alterar status com transição inválida")]
+    public async Task It_ShouldThrow_WhenStatusTransitionIsInvalid()
+    {
+        var customerId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var performedBy = Guid.NewGuid();
+
+        await using var context = new DbContextTestBuilder()
+            .WithData([CustomerMocks.CreateCustomerPf(customerId)])
+            .WithData([VehicleMocks.CreateVehicle(vehicleId, customerId)])
+            .Build();
+
+        var service = BuildService(context);
+        var created = await service.Create(new CreateWorkOrderRequest
+        {
+            VehicleId = vehicleId,
+            ReportedProblem = "Sem refrigeração",
+            Observations = "Ar não gela",
+        }, Guid.NewGuid(), CancellationToken.None);
+
+        await Assert.ThrowsExactlyAsync<BusinessException>(async () =>
+            await service.ChangeStatus(created.CreatedId, WorkOrderStatus.Completed, performedBy, null, CancellationToken.None));
+    }
+
+    [TestMethod("Consulta por access key ignora espaços")]
+    public async Task It_ShouldTrackWorkOrderByAccessKey_IgnoringSpaces()
+    {
+        var customerId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+
+        await using var context = new DbContextTestBuilder()
+            .WithData([CustomerMocks.CreateCustomerPf(customerId)])
+            .WithData([VehicleMocks.CreateVehicle(vehicleId, customerId)])
+            .Build();
+
+        var service = BuildService(context);
+        var created = await service.Create(new CreateWorkOrderRequest
+        {
+            VehicleId = vehicleId,
+            ReportedProblem = "Pneu furado",
+            Observations = "Troca necessária",
+        }, Guid.NewGuid(), CancellationToken.None);
+
+        var workOrder = await context.WorkOrders
+            .AsNoTracking()
+            .FirstAsync(item => item.Id == created.CreatedId, TestContext.CancellationTokenSource.Token);
+
+        var accessKeyWithSpaces = $"{workOrder.AccessKey[..4]} {workOrder.AccessKey[4..]}";
+        var tracked = await service.TrackByAccessKey(customerId, accessKeyWithSpaces, CancellationToken.None);
+
+        Assert.IsNotNull(tracked);
+        Assert.AreEqual(created.CreatedId, tracked.Id);
+    }
+
+    [TestMethod("Consulta por access key retorna null quando não encontra")]
+    public async Task It_ShouldReturnNull_WhenTrackByAccessKeyDoesNotMatch()
+    {
+        var customerId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+
+        await using var context = new DbContextTestBuilder()
+            .WithData([CustomerMocks.CreateCustomerPf(customerId)])
+            .WithData([VehicleMocks.CreateVehicle(vehicleId, customerId)])
+            .Build();
+
+        var service = BuildService(context);
+        await service.Create(new CreateWorkOrderRequest
+        {
+            VehicleId = vehicleId,
+            ReportedProblem = "Direção desalinhada",
+            Observations = "Puxa para esquerda",
+        }, Guid.NewGuid(), CancellationToken.None);
+
+        var tracked = await service.TrackByAccessKey(customerId, "99999999", CancellationToken.None);
+        Assert.IsNull(tracked);
+    }
+
+    [TestMethod("Consulta por access key falha quando customer não existe")]
+    public async Task It_ShouldThrow_WhenTrackingWorkOrderForNonExistentCustomer()
+    {
+        await using var context = new DbContextTestBuilder().Build();
+        var service = BuildService(context);
+
+        await Assert.ThrowsExactlyAsync<EntityNotFoundException>(async () =>
+            await service.TrackByAccessKey(Guid.NewGuid(), "12345678", CancellationToken.None));
+    }
+
+    [TestMethod("Não atualiza detalhes quando observação é nula")]
+    public async Task It_ShouldNotUpdateDetails_WhenObservationsIsNull()
+    {
+        var customerId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var performedBy = Guid.NewGuid();
+
+        await using var context = new DbContextTestBuilder()
+            .WithData([CustomerMocks.CreateCustomerPf(customerId)])
+            .WithData([VehicleMocks.CreateVehicle(vehicleId, customerId)])
+            .Build();
+
+        var service = BuildService(context);
+        var created = await service.Create(new CreateWorkOrderRequest
+        {
+            VehicleId = vehicleId,
+            ReportedProblem = "Pintura desgastada",
+            Observations = "Obs inicial",
+        }, Guid.NewGuid(), CancellationToken.None);
+
+        await service.UpdateDetails(created.CreatedId, new UpdateWorkOrderRequest
+        {
+            Observations = null,
+        }, performedBy, CancellationToken.None);
+
+        var updates = await context.WorkOrderHistories
+            .AsNoTracking()
+            .Where(item => item.WorkOrderId == created.CreatedId && item.Action == "DetailsUpdated")
+            .ToListAsync(TestContext.CancellationTokenSource.Token);
+
+        Assert.AreEqual(0, updates.Count);
+    }
+
+    [TestMethod("Não atualiza detalhes quando observação não muda")]
+    public async Task It_ShouldNotUpdateDetails_WhenObservationsDoesNotChange()
+    {
+        var customerId = Guid.NewGuid();
+        var vehicleId = Guid.NewGuid();
+        var performedBy = Guid.NewGuid();
+
+        await using var context = new DbContextTestBuilder()
+            .WithData([CustomerMocks.CreateCustomerPf(customerId)])
+            .WithData([VehicleMocks.CreateVehicle(vehicleId, customerId)])
+            .Build();
+
+        var service = BuildService(context);
+        var created = await service.Create(new CreateWorkOrderRequest
+        {
+            VehicleId = vehicleId,
+            ReportedProblem = "Ajuste de embreagem",
+            Observations = "Manter regulagem",
+        }, Guid.NewGuid(), CancellationToken.None);
+
+        await service.UpdateDetails(created.CreatedId, new UpdateWorkOrderRequest
+        {
+            Observations = "Manter regulagem",
+        }, performedBy, CancellationToken.None);
+
+        var updates = await context.WorkOrderHistories
+            .AsNoTracking()
+            .Where(item => item.WorkOrderId == created.CreatedId && item.Action == "DetailsUpdated")
+            .ToListAsync(TestContext.CancellationTokenSource.Token);
+
+        Assert.AreEqual(0, updates.Count);
     }
 
     private WorkOrderAppService BuildService(Mechanics.Infra.Data.AppDbContext context) =>
