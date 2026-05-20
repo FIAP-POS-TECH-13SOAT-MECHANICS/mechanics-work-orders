@@ -2,6 +2,8 @@
 
 Gestão de clientes, veículos e ordens de serviço.
 
+[![Quality Gate Status](http://34.231.107.126/api/project_badges/measure?project=fiap-mechanics-work-orders&metric=alert_status&token=sqb_3aa2d35f86e1c9fca4691be311faad15cf322dfa)](http://34.231.107.126/dashboard?id=fiap-mechanics-work-orders)
+
 ## Definição do ambiente
 
 - SDK: .NET 8.0
@@ -138,3 +140,5 @@ A análise é habilitada em:
 
 - `pull_request` com destino em `main`;
 - `workflow_dispatch` quando executado na branch `main`.
+
+O SonarQube faz o coverage da camada de domínio e aplicação. Para isso, o workflow executa os testes com cobertura e publica os resultados usando o SonarScanner.
