@@ -6,6 +6,7 @@ using Mechanics.Infra.Messaging.Publishers;
 using Mechanics.Infra.Security;
 using Mechanics.Infra.Security.Extensions;
 using Mechanics.Infra.Security.Services;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -168,8 +169,10 @@ public class InfraCoverageBoostTests
     public void It_ShouldRegisterAuthenticationAndCurrentUserService()
     {
         var services = new ServiceCollection();
+        var environment = new Mock<IWebHostEnvironment>();
+        environment.Setup(e => e.EnvironmentName).Returns("Development");
 
-        services.AddJwtAuthentication(validateInDebugMode: false);
+        services.AddJwtAuthentication(environment.Object);
 
         Assert.IsTrue(services.Any(descriptor => descriptor.ServiceType == typeof(ICurrentUserService)));
         Assert.IsTrue(services.Any(descriptor => descriptor.ServiceType == typeof(IHttpContextAccessor)));
